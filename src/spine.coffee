@@ -1,9 +1,8 @@
 Events =
   _add_callback: (target, ev, callback) ->
-    evs   = ev.split(" ")
     calls = @hasOwnProperty("_callbacks") and @_callbacks or= {}
   
-    for name in evs
+    for name in ev.split(" ")
       calls[name] or= []
       calls[name].push { target: target, fn: callback }
     @
@@ -33,22 +32,23 @@ Events =
     unless ev
       @_callbacks = {}
       return @
-  
-    list = @_callbacks?[ev]
-    return @ unless list
-  
-    unless callback
-      for cb, i in list when !cb.target? or cb.target.eql?(target)
+
+    for name in ev.split(' ')
+      list = @_callbacks?[name]
+      continue unless list
+    
+      unless callback
+        for cb, i in list when !cb.target? or cb.target.eql?(target)
+          list = list.slice()
+          list.splice(i, 1)
+          @_callbacks[name] = list
+        continue
+
+      for cb, i in list when (!cb.target? or cb.target.eql?(target)) and cb.fn is callback
         list = list.slice()
         list.splice(i, 1)
-        @_callbacks[ev] = list
-      return @
-
-    for cb, i in list when (!cb.target? or cb.target.eql?(target)) and cb.fn is callback
-      list = list.slice()
-      list.splice(i, 1)
-      @_callbacks[ev] = list
-      break
+        @_callbacks[name] = list
+        break
     @
 
   unbind: (ev, callback) ->
@@ -280,6 +280,7 @@ class Model extends Module
     @destroyed = true
     @trigger("destroy", @)
     @trigger("change", @, "destroy")
+    @unbind()
 
   dup: (newRecord) ->
     result = new @constructor(@attributes())
