@@ -82,8 +82,10 @@ class Spine.Route extends Spine.Module
   
   @getHost: ->
     (document.location + "").replace(@getPath() + @getHash(), "")
-    
-  @change: ->
+  
+  # Coffee-script bug: https://github.com/jashkenas/coffee-script/issues/1464
+  # Have to use "= =>" rather than ": =>" to get binding to work.
+  @change = =>
     path = if @history then @getPath() else @getFragment()
     return if path is @path
     @path = path
@@ -123,12 +125,9 @@ class Spine.Route extends Spine.Module
     @callback.call(null, options)
     true
 
-# Coffee-script bug
-Spine.Route.change = Spine.Route.proxy(Spine.Route.change)
-
 Spine.Controller.include
   route: (path, callback) ->
-    Spine.Route.add(path, @proxy(callback))
+    Spine.Route.add(path, callback)
   
   routes: (routes) ->
     @route(key, value) for key, value of routes
