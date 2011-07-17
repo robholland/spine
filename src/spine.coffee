@@ -68,6 +68,12 @@ class Module
     extended = obj.extended
     extended.apply(this) if extended
     @
+    
+  @proxy: (func) ->
+    => func.apply(@, arguments)
+
+  proxy: (func) ->
+    => func.apply(@, arguments)
 
 class Model extends Module
   @extend Events
@@ -338,8 +344,10 @@ class Controller extends Module
   $: (selector) -> $(selector, @el)
       
   delegateEvents: ->
-    for key, method of @events
-      method     = @[method]
+    for key of @events
+      methodName = @events[key]
+      method     = @proxy(@[methodName])
+      
       match      = key.match(@eventSplitter)
       eventName  = match[1]
       selector   = match[2]
@@ -358,7 +366,7 @@ class Controller extends Module
       @[value] = @$(key)
   
   delay: (func, timeout) ->
-    setTimeout(func, timeout || 0)
+    setTimeout(@proxy(func), timeout || 0)
     
   html: (element) -> 
     @el.html(element.el or element)
